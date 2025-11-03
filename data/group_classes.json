@@ -1,0 +1,15 @@
+[
+  {
+    "class_id": 2,
+    "class_name": "Вечерняя йога",
+    "coach_id": 2,
+    "room_id": 2,
+    "schedule": "2025-10-15T18:00:00",
+    "max_capacity": 15,
+    "current_attendees": 2,
+    "attendees": [
+      1,
+      2
+    ]
+  }
+]

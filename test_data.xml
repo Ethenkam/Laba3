@@ -1,0 +1,69 @@
+<fitness_club>
+  <members>
+    <member>
+      <id>2</id>
+      <first_name>Мария</first_name>
+      <last_name>Иванова</last_name>
+      <email>maria@test.com</email>
+      <phone>79001112233</phone>
+      <membership_start>2025-10-10</membership_start>
+      <membership_end>2025-11-10</membership_end>
+      <is_active>true</is_active>
+    </member>
+  </members>
+
+  <coaches>
+    <coach>
+      <id>2</id>
+      <first_name>Петр</first_name>
+      <last_name>Смирнов</last_name>
+      <email>petr@fit.com</email>
+      <phone>79887776655</phone>
+      <specialization>Йога</specialization>
+      <hourly_rate>2500</hourly_rate>
+      <is_active>true</is_active>
+    </coach>
+  </coaches>
+
+  <gym_rooms>
+    <gym_room>
+      <room_id>2</room_id>
+      <room_name>Йога зал</room_name>
+      <room_type>йога</room_type>
+      <capacity>20</capacity>
+    </gym_room>
+  </gym_rooms>
+
+  <group_classes>
+    <group_class>
+      <class_id>2</class_id>
+      <class_name>Вечерняя йога</class_name>
+      <coach_id>2</coach_id>
+      <room_id>2</room_id>
+      <schedule>2025-10-15T18:00:00</schedule>
+      <max_capacity>15</max_capacity>
+      <current_attendees>2</current_attendees>
+      <attendees>1,2</attendees>
+    </group_class>
+  </group_classes>
+
+  <membership_plans>
+    <membership_plan>
+      <plan_id>2</plan_id>
+      <name>Премиум</name>
+      <duration_days>60</duration_days>
+      <price>5000</price>
+    </membership_plan>
+  </membership_plans>
+
+  <payments>
+    <payment>
+      <payment_id>2</payment_id>
+      <member_id>2</member_id>
+      <plan_id>2</plan_id>
+      <amount>5000</amount>
+      <payment_date>2025-10-10</payment_date>
+      <payment_method>cash</payment_method>
+    </payment>
+  </payments>
+</fitness_club>

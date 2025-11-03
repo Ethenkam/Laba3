@@ -1,0 +1,12 @@
+[
+  {
+    "id": 2,
+    "first_name": "Петр",
+    "last_name": "Смирнов",
+    "email": "petr@fit.com",
+    "phone": "79887776655",
+    "specialization": "Йога",
+    "hourly_rate": 2500,
+    "is_active": true
+  }
+]
