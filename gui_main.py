@@ -48,7 +48,6 @@ class GymManagementSystem(QMainWindow):
         self.create_rooms_tab()
         self.create_plans_tab()
         self.create_reports_tab()
-
         self.members_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
         self.ensure_data_exists()
