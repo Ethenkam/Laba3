@@ -1,8 +1,9 @@
 import sys
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget, QStatusBar, QToolBar, QMessageBox
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction, QIcon
 
 from gui.members_tab import MembersTab
 from gui.classes_tab import ClassesTab
@@ -23,7 +24,7 @@ class GymManagementSystem(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Система управления фитнес-клубом")
-        self.setGeometry(100, 100, 1000, 700)
+        self.setGeometry(100, 100, 1200, 800)
 
         self.member_repo = MemberRepository()
         self.coach_repo = CoachRepository()
@@ -36,11 +37,34 @@ class GymManagementSystem(QMainWindow):
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
 
+        self.create_toolbar()
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
 
+        self.create_status_bar()
         self.create_tabs()
         self.ensure_data_exists()
+
+    def create_toolbar(self):
+        toolbar = QToolBar("Main Toolbar")
+        self.addToolBar(toolbar)
+        
+        # Refresh action
+        refresh_action = QAction("Обновить данные", self)
+        refresh_action.setStatusTip("Обновить все таблицы")
+        refresh_action.triggered.connect(self.refresh_all_tables)
+        toolbar.addAction(refresh_action)
+        
+        # Export action
+        export_action = QAction("Экспорт в CSV", self)
+        export_action.setStatusTip("Экспортировать данные в CSV файл")
+        export_action.triggered.connect(self.export_to_csv)
+        toolbar.addAction(export_action)
+
+    def create_status_bar(self):
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+        self.status_bar.showMessage("Готов", 2000)
 
     def create_tabs(self):
         # Create all tabs
@@ -87,6 +111,13 @@ class GymManagementSystem(QMainWindow):
         self.rooms_tab.refresh_rooms_table()
         self.plans_tab.refresh_plans_table()
         self.reports_tab.refresh_payments_table()
+        self.status_bar.showMessage("Все таблицы обновлены", 2000)
+
+    def export_to_csv(self):
+        """Placeholder for CSV export functionality"""
+        QMessageBox.information(self, "Экспорт в CSV", 
+                                "Функция экспорта в CSV будет реализована в следующей версии.\n\n"
+                                "Будет экспортированы все данные из текущей вкладки в формате CSV.")
 
 
 def main():

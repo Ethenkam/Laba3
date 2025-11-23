@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem,
-    QLineEdit, QMessageBox
+    QLineEdit, QMessageBox, QSplitter, QHeaderView
 )
+from PyQt6.QtCore import Qt
 from decimal import Decimal
 
 from classes.people import Coach
@@ -12,6 +13,7 @@ class CoachesTab(QWidget):
     def __init__(self, coach_repo):
         super().__init__()
         self.coach_repo = coach_repo
+        self.all_coaches = []
 
         self.init_ui()
         self.setup_connections()
@@ -20,14 +22,45 @@ class CoachesTab(QWidget):
     def init_ui(self):
         layout = QVBoxLayout(self)
 
+        # Create splitter for resizable sections
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        layout.addWidget(splitter)
+
+        # Top section with search and table
+        top_widget = QWidget()
+        top_layout = QVBoxLayout(top_widget)
+        
+        # Search section
+        search_layout = QHBoxLayout()
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText("Поиск по тренерам...")
+        self.search_btn = QPushButton("Поиск")
+        self.clear_search_btn = QPushButton("Очистить")
+        search_layout.addWidget(QLabel("Поиск:"))
+        search_layout.addWidget(self.search_box)
+        search_layout.addWidget(self.search_btn)
+        search_layout.addWidget(self.clear_search_btn)
+        top_layout.addLayout(search_layout)
+
         # Coaches table
         self.coaches_table = QTableWidget()
         self.coaches_table.setColumnCount(7)
         self.coaches_table.setHorizontalHeaderLabels([
             "ID", "Имя", "Фамилия", "Email", "Телефон", "Специализация", "Ставка"
         ])
-        layout.addWidget(QLabel("Тренеры:"))
-        layout.addWidget(self.coaches_table)
+        
+        # Enable sorting
+        self.coaches_table.setSortingEnabled(True)
+        header = self.coaches_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        
+        top_layout.addWidget(QLabel("Тренеры:"))
+        top_layout.addWidget(self.coaches_table)
+        splitter.addWidget(top_widget)
+
+        # Bottom section with form
+        bottom_widget = QWidget()
+        bottom_layout = QVBoxLayout(bottom_widget)
 
         # Coach form
         form_group = QGroupBox("Добавить/Редактировать тренера")
@@ -62,16 +95,53 @@ class CoachesTab(QWidget):
 
         form_layout.addRow(buttons_layout)
         form_group.setLayout(form_layout)
-        layout.addWidget(form_group)
+        bottom_layout.addWidget(form_group)
+        
+        splitter.addWidget(bottom_widget)
+        splitter.setSizes([400, 400])  # Set initial sizes
 
     def setup_connections(self):
         self.add_coach_btn.clicked.connect(self.add_coach)
         self.update_coach_btn.clicked.connect(self.update_coach)
         self.delete_coach_btn.clicked.connect(self.delete_coach)
         self.clear_coach_form_btn.clicked.connect(self.clear_coach_form)
+        self.search_btn.clicked.connect(self.search_coaches)
+        self.clear_search_btn.clicked.connect(self.clear_search)
+        self.coaches_table.itemClicked.connect(self.populate_form_from_table)
 
-    def refresh_coaches_table(self):
-        coaches = self.coach_repo.find_all()
+    def populate_form_from_table(self, item):
+        row = item.row()
+        self.coach_id_edit.setText(self.coaches_table.item(row, 0).text())
+        self.coach_first_name_edit.setText(self.coaches_table.item(row, 1).text())
+        self.coach_last_name_edit.setText(self.coaches_table.item(row, 2).text())
+        self.coach_email_edit.setText(self.coaches_table.item(row, 3).text())
+        self.coach_phone_edit.setText(self.coaches_table.item(row, 4).text())
+        self.coach_specialization_edit.setText(self.coaches_table.item(row, 5).text())
+        self.coach_hourly_rate_edit.setText(self.coaches_table.item(row, 6).text())
+
+    def search_coaches(self):
+        search_term = self.search_box.text().lower()
+        if not search_term:
+            self.refresh_coaches_table()
+            return
+            
+        filtered_coaches = []
+        for coach in self.all_coaches:
+            if (search_term in str(coach.id) or 
+                search_term in coach.first_name.lower() or 
+                search_term in coach.last_name.lower() or 
+                search_term in coach.email.lower() or 
+                search_term in coach.phone.lower() or
+                search_term in coach.specialization.lower()):
+                filtered_coaches.append(coach)
+                
+        self.display_coaches(filtered_coaches)
+
+    def clear_search(self):
+        self.search_box.clear()
+        self.refresh_coaches_table()
+
+    def display_coaches(self, coaches):
         self.coaches_table.setRowCount(len(coaches))
 
         for row, coach in enumerate(coaches):
@@ -84,6 +154,10 @@ class CoachesTab(QWidget):
             self.coaches_table.setItem(row, 6, QTableWidgetItem(str(coach.hourly_rate)))
 
         self.coaches_table.resizeColumnsToContents()
+
+    def refresh_coaches_table(self):
+        self.all_coaches = self.coach_repo.find_all()
+        self.display_coaches(self.all_coaches)
 
     def add_coach(self):
         try:

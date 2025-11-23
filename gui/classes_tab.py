@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem,
-    QLineEdit, QDateTimeEdit, QMessageBox
+    QLineEdit, QDateTimeEdit, QMessageBox, QSplitter, QHeaderView, QComboBox
 )
-from PyQt6.QtCore import QDateTime
+from PyQt6.QtCore import QDateTime, Qt
 
 from classes.group_class import GroupClass
 
@@ -15,13 +15,38 @@ class ClassesTab(QWidget):
         self.coach_repo = coach_repo
         self.room_repo = room_repo
         self.member_repo = member_repo
+        self.all_classes = []
 
         self.init_ui()
         self.setup_connections()
         self.refresh_classes_table()
+        self.refresh_coaches_combo()
+        self.refresh_rooms_combo()
+        self.refresh_classes_combo()
+        self.refresh_members_combo()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
+
+        # Create splitter for resizable sections
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        layout.addWidget(splitter)
+
+        # Top section with search and table
+        top_widget = QWidget()
+        top_layout = QVBoxLayout(top_widget)
+        
+        # Search section
+        search_layout = QHBoxLayout()
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText("Поиск по занятиям...")
+        self.search_btn = QPushButton("Поиск")
+        self.clear_search_btn = QPushButton("Очистить")
+        search_layout.addWidget(QLabel("Поиск:"))
+        search_layout.addWidget(self.search_box)
+        search_layout.addWidget(self.search_btn)
+        search_layout.addWidget(self.clear_search_btn)
+        top_layout.addLayout(search_layout)
 
         # Classes table
         self.classes_table = QTableWidget()
@@ -30,8 +55,19 @@ class ClassesTab(QWidget):
             "ID", "Название", "Тренер", "Зал", "Дата/время", "Вместимость", "Участники"
         ])
         self.classes_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        layout.addWidget(QLabel("Групповые занятия:"))
-        layout.addWidget(self.classes_table)
+        
+        # Enable sorting
+        self.classes_table.setSortingEnabled(True)
+        header = self.classes_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        
+        top_layout.addWidget(QLabel("Групповые занятия:"))
+        top_layout.addWidget(self.classes_table)
+        splitter.addWidget(top_widget)
+
+        # Bottom section with forms
+        bottom_widget = QWidget()
+        bottom_layout = QVBoxLayout(bottom_widget)
 
         # Class form
         form_group = QGroupBox("Добавить/Редактировать занятие")
@@ -39,16 +75,16 @@ class ClassesTab(QWidget):
 
         self.class_id_edit = QLineEdit()
         self.class_name_edit = QLineEdit()
-        self.class_coach_combo = QLineEdit()  # In a full implementation, this would be a combo box
-        self.class_room_combo = QLineEdit()  # In a full implementation, this would be a combo box
+        self.class_coach_combo = QComboBox()
+        self.class_room_combo = QComboBox()
         self.class_datetime_edit = QDateTimeEdit()
         self.class_datetime_edit.setDateTime(QDateTime.currentDateTime())
         self.class_capacity_edit = QLineEdit()
 
         form_layout.addRow("ID:", self.class_id_edit)
         form_layout.addRow("Название:", self.class_name_edit)
-        form_layout.addRow("Тренер (ID):", self.class_coach_combo)
-        form_layout.addRow("Зал (ID):", self.class_room_combo)
+        form_layout.addRow("Тренер:", self.class_coach_combo)
+        form_layout.addRow("Зал:", self.class_room_combo)
         form_layout.addRow("Дата/время:", self.class_datetime_edit)
         form_layout.addRow("Вместимость:", self.class_capacity_edit)
 
@@ -65,23 +101,26 @@ class ClassesTab(QWidget):
 
         form_layout.addRow(buttons_layout)
         form_group.setLayout(form_layout)
-        layout.addWidget(form_group)
+        bottom_layout.addWidget(form_group)
 
         # Enrollment form
         enrollment_group = QGroupBox("Записаться на занятие")
         enrollment_layout = QFormLayout()
 
-        self.enroll_class_id_edit = QLineEdit()
-        self.enroll_member_id_edit = QLineEdit()
+        self.enroll_class_combo = QComboBox()
+        self.enroll_member_combo = QComboBox()
 
-        enrollment_layout.addRow("ID занятия:", self.enroll_class_id_edit)
-        enrollment_layout.addRow("ID участника:", self.enroll_member_id_edit)
+        enrollment_layout.addRow("Занятие:", self.enroll_class_combo)
+        enrollment_layout.addRow("Участник:", self.enroll_member_combo)
 
         self.enroll_btn = QPushButton("Записаться")
         enrollment_layout.addRow(self.enroll_btn)
 
         enrollment_group.setLayout(enrollment_layout)
-        layout.addWidget(enrollment_group)
+        bottom_layout.addWidget(enrollment_group)
+        
+        splitter.addWidget(bottom_widget)
+        splitter.setSizes([400, 400])  # Set initial sizes
 
     def setup_connections(self):
         self.add_class_btn.clicked.connect(self.add_class)
@@ -89,9 +128,77 @@ class ClassesTab(QWidget):
         self.delete_class_btn.clicked.connect(self.delete_class)
         self.clear_class_form_btn.clicked.connect(self.clear_class_form)
         self.enroll_btn.clicked.connect(self.enroll_member)
+        self.search_btn.clicked.connect(self.search_classes)
+        self.clear_search_btn.clicked.connect(self.clear_search)
+        self.classes_table.itemClicked.connect(self.populate_form_from_table)
 
-    def refresh_classes_table(self):
+    def refresh_coaches_combo(self):
+        coaches = self.coach_repo.find_all()
+        self.class_coach_combo.clear()
+        for coach in coaches:
+            self.class_coach_combo.addItem(f"{coach.get_full_name()} (ID: {coach.id})", coach.id)
+
+    def refresh_rooms_combo(self):
+        rooms = self.room_repo.find_all()
+        self.class_room_combo.clear()
+        for room in rooms:
+            self.class_room_combo.addItem(f"{room.room_name} (ID: {room.room_id})", room.room_id)
+
+    def refresh_classes_combo(self):
         classes = self.group_class_repo.find_all()
+        self.enroll_class_combo.clear()
+        for class_item in classes:
+            self.enroll_class_combo.addItem(f"{class_item.class_name} (ID: {class_item.class_id})", class_item.class_id)
+
+    def refresh_members_combo(self):
+        members = self.member_repo.get_all()
+        self.enroll_member_combo.clear()
+        for member in members:
+            self.enroll_member_combo.addItem(f"{member.get_full_name()} (ID: {member.id})", member.id)
+
+    def populate_form_from_table(self, item):
+        row = item.row()
+        self.class_id_edit.setText(self.classes_table.item(row, 0).text())
+        self.class_name_edit.setText(self.classes_table.item(row, 1).text())
+        
+        # Find and set coach
+        coach_text = self.classes_table.item(row, 2).text()
+        for i in range(self.class_coach_combo.count()):
+            if coach_text in self.class_coach_combo.itemText(i):
+                self.class_coach_combo.setCurrentIndex(i)
+                break
+        
+        # Find and set room
+        room_text = self.classes_table.item(row, 3).text()
+        for i in range(self.class_room_combo.count()):
+            if room_text in self.class_room_combo.itemText(i):
+                self.class_room_combo.setCurrentIndex(i)
+                break
+
+        self.class_datetime_edit.setDateTime(QDateTime.currentDateTime())
+        self.class_capacity_edit.setText(self.classes_table.item(row, 5).text())
+
+    def search_classes(self):
+        search_term = self.search_box.text().lower()
+        if not search_term:
+            self.refresh_classes_table()
+            return
+            
+        filtered_classes = []
+        for class_item in self.all_classes:
+            if (search_term in str(class_item.class_id) or 
+                search_term in class_item.class_name.lower() or 
+                search_term in class_item.coach.get_full_name().lower() or 
+                search_term in class_item.room.room_name.lower()):
+                filtered_classes.append(class_item)
+                
+        self.display_classes(filtered_classes)
+
+    def clear_search(self):
+        self.search_box.clear()
+        self.refresh_classes_table()
+
+    def display_classes(self, classes):
         self.classes_table.setRowCount(len(classes))
 
         for row, group_class in enumerate(classes):
@@ -109,17 +216,29 @@ class ClassesTab(QWidget):
 
         self.classes_table.resizeColumnsToContents()
 
+    def refresh_classes_table(self):
+        self.all_classes = self.group_class_repo.find_all()
+        self.display_classes(self.all_classes)
+
     def add_class(self):
         try:
             class_id = int(self.class_id_edit.text()) if self.class_id_edit.text() else 0
             class_name = self.class_name_edit.text()
-            coach_id = int(self.class_coach_combo.text()) if self.class_coach_combo.text() else 0
-            room_id = int(self.class_room_combo.text()) if self.class_room_combo.text() else 0
+            coach_id = self.class_coach_combo.currentData()
+            room_id = self.class_room_combo.currentData()
             schedule = self.class_datetime_edit.dateTime().toPyDateTime()
             capacity = int(self.class_capacity_edit.text()) if self.class_capacity_edit.text() else 0
 
             if not class_name:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите название занятия")
+                return
+
+            if coach_id is None:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите тренера")
+                return
+
+            if room_id is None:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите зал")
                 return
 
             # Get coach and room objects
@@ -180,22 +299,24 @@ class ClassesTab(QWidget):
     def clear_class_form(self):
         self.class_id_edit.clear()
         self.class_name_edit.clear()
-        self.class_coach_combo.clear()
-        self.class_room_combo.clear()
         self.class_datetime_edit.setDateTime(QDateTime.currentDateTime())
         self.class_capacity_edit.clear()
+        if self.class_coach_combo.count() > 0:
+            self.class_coach_combo.setCurrentIndex(0)
+        if self.class_room_combo.count() > 0:
+            self.class_room_combo.setCurrentIndex(0)
 
     def enroll_member(self):
         try:
-            class_id = int(self.enroll_class_id_edit.text()) if self.enroll_class_id_edit.text() else 0
-            member_id = int(self.enroll_member_id_edit.text()) if self.enroll_member_id_edit.text() else 0
+            class_id = self.enroll_class_combo.currentData()
+            member_id = self.enroll_member_combo.currentData()
 
-            if class_id <= 0:
-                QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите действительный ID занятия")
+            if class_id is None:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите занятие")
                 return
 
-            if member_id <= 0:
-                QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите действительный ID участника")
+            if member_id is None:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите участника")
                 return
 
             # Find the class
@@ -226,8 +347,6 @@ class ClassesTab(QWidget):
                 self.group_class_repo.save(group_class)
                 QMessageBox.information(self, "Успех", "Участник успешно записан на занятие")
                 self.refresh_classes_table()
-                self.enroll_class_id_edit.clear()
-                self.enroll_member_id_edit.clear()
             else:
                 QMessageBox.warning(self, "Ошибка", "Не удалось записать участника на занятие")
 
