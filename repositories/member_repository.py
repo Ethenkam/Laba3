@@ -13,12 +13,18 @@ class MemberRepository:
     def _load(self) -> List:
         if not os.path.exists(self.filename):
             return []
-        with open(self.filename, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open(self.filename, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                if not content:
+                    return []
+                return json.loads(content)
+        except json.JSONDecodeError:
+            return []
 
     def _save(self, members: List):
         with open(self.filename, 'w', encoding='utf-8') as f:
-            json.dump(members, f, indent=2)
+            json.dump(members, f, indent=2, ensure_ascii=False)
 
     def save(self, member: Member) -> None:
         data = self._load()
@@ -28,8 +34,8 @@ class MemberRepository:
             "last_name": member.last_name,
             "email": member.email,
             "phone": member.phone,
-            "membership_start": member.membership_start_date.isoformat(),
-            "membership_end": member.membership_end_date.isoformat(),
+            "membership_start": member.membership_start_date.isoformat() if member.membership_start_date else None,
+            "membership_end": member.membership_end_date.isoformat() if member.membership_end_date else None,
             "is_active": member.is_active,
         }
 
@@ -58,8 +64,8 @@ class MemberRepository:
                 last_name=item["last_name"],
                 email=item["email"],
                 phone=item["phone"],
-                membership_start_date=date.fromisoformat(item["membership_start"]),
-                membership_end_date=date.fromisoformat(item["membership_end"]),
+                membership_start_date=date.fromisoformat(item["membership_start"]) if item["membership_start"] else None,
+                membership_end_date=date.fromisoformat(item["membership_end"]) if item["membership_end"] else None,
                 is_active=item["is_active"]
             )
             members.append(m)

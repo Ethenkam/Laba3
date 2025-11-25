@@ -17,19 +17,20 @@ class RoomsTab(QWidget):
         self.init_ui()
         self.setup_connections()
         self.refresh_rooms_table()
+        self.apply_styles()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
 
-        # Create splitter for resizable sections
+        # Создание разделителя
         splitter = QSplitter(Qt.Orientation.Vertical)
         layout.addWidget(splitter)
 
-        # Top section with search and table
+        # Верхняя часть с поиском и таблицей
         top_widget = QWidget()
         top_layout = QVBoxLayout(top_widget)
-        
-        # Search section
+
+        # Поиск
         search_layout = QHBoxLayout()
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Поиск по залам...")
@@ -41,27 +42,27 @@ class RoomsTab(QWidget):
         search_layout.addWidget(self.clear_search_btn)
         top_layout.addLayout(search_layout)
 
-        # Rooms table
+        # Таблица залов
         self.rooms_table = QTableWidget()
         self.rooms_table.setColumnCount(4)
         self.rooms_table.setHorizontalHeaderLabels([
             "ID", "Название", "Тип", "Вместимость"
         ])
-        
-        # Enable sorting
+
+        # Включение сортировки
         self.rooms_table.setSortingEnabled(True)
         header = self.rooms_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        
+
         top_layout.addWidget(QLabel("Залы:"))
         top_layout.addWidget(self.rooms_table)
         splitter.addWidget(top_widget)
 
-        # Bottom section with form
+        # Нижняя часть с формой
         bottom_widget = QWidget()
         bottom_layout = QVBoxLayout(bottom_widget)
 
-        # Room form
+        # Форма зала
         form_group = QGroupBox("Добавить/Редактировать зал")
         form_layout = QFormLayout()
 
@@ -89,9 +90,43 @@ class RoomsTab(QWidget):
         form_layout.addRow(buttons_layout)
         form_group.setLayout(form_layout)
         bottom_layout.addWidget(form_group)
-        
+
         splitter.addWidget(bottom_widget)
-        splitter.setSizes([400, 400])  # Set initial sizes
+        splitter.setSizes([400, 400])
+
+    def apply_styles(self):
+        # Применяем стили к элементам
+        self.search_box.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 2px solid #555;
+                border-radius: 4px;
+                background-color: #2d2d2d;
+                color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3a506b;
+            }
+        """)
+
+        self.rooms_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #2d2d2d;
+                alternate-background-color: #3a3a3a;
+                selection-background-color: #3a506b;
+                gridline-color: #555;
+                color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #3a506b;
+            }
+            QHeaderView::section {
+                background-color: #3a506b;
+                color: white;
+                padding: 4px;
+                border: 1px solid #555;
+            }
+        """)
 
     def setup_connections(self):
         self.add_room_btn.clicked.connect(self.add_room)
@@ -114,14 +149,14 @@ class RoomsTab(QWidget):
         if not search_term:
             self.refresh_rooms_table()
             return
-            
+
         filtered_rooms = []
         for room in self.all_rooms:
-            if (search_term in str(room.room_id) or 
-                search_term in room.room_name.lower() or 
+            if (search_term in str(room.room_id) or
+                search_term in room.room_name.lower() or
                 search_term in room.room_type.lower()):
                 filtered_rooms.append(room)
-                
+
         self.display_rooms(filtered_rooms)
 
     def clear_search(self):
@@ -166,22 +201,31 @@ class RoomsTab(QWidget):
             self.refresh_rooms_table()
             self.clear_room_form()
 
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Некорректный формат ID или вместимости")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить зал: {str(e)}")
 
     def update_room(self):
+        # Для упрощения используем ту же логику, что и в add_room
         self.add_room()
 
     def delete_room(self):
         try:
-            room_id = int(self.room_id_edit.text()) if self.room_id_edit.text() else 0
+            room_id_text = self.room_id_edit.text()
+            if not room_id_text:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите ID зала")
+                return
+            room_id = int(room_id_text)
             if room_id <= 0:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите действительный ID зала")
                 return
 
-            reply = QMessageBox.question(self, "Подтверждение",
-                                         f"Вы уверены, что хотите удалить зал с ID {room_id}?",
-                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            reply = QMessageBox.question(
+                self, "Подтверждение",
+                f"Вы уверены, что хотите удалить зал с ID {room_id}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
 
             if reply == QMessageBox.StandardButton.Yes:
                 success = self.room_repo.delete(room_id)
@@ -192,6 +236,8 @@ class RoomsTab(QWidget):
                 else:
                     QMessageBox.warning(self, "Ошибка", "Зал с указанным ID не найден")
 
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Некорректный формат ID")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось удалить зал: {str(e)}")
 

@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from decimal import Decimal
 
 
 class ReportsTab(QWidget):
@@ -18,11 +19,12 @@ class ReportsTab(QWidget):
         self.refresh_payments_table()
         self.plot_revenue_chart()
         self.plot_members_chart()
+        self.apply_styles()
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
 
-        # === Payments Table ===
+        # === Таблица платежей ===
         payments_group = QGroupBox("Платежи")
         payments_layout = QVBoxLayout()
 
@@ -39,29 +41,64 @@ class ReportsTab(QWidget):
         payments_group.setLayout(payments_layout)
         main_layout.addWidget(payments_group)
 
-        # === Statistics Label ===
+        # === Статистика ===
         self.stats_label = QLabel()
         main_layout.addWidget(self.stats_label)
 
-        # === Charts Section ===
+        # === Диаграммы ===
         charts_layout = QHBoxLayout()
 
-        # Revenue chart
+        # Диаграмма доходов
         self.revenue_figure = Figure(figsize=(5, 3))
         self.revenue_canvas = FigureCanvas(self.revenue_figure)
         charts_layout.addWidget(self.revenue_canvas)
 
-        # Members chart
+        # Диаграмма участников
         self.members_figure = Figure(figsize=(5, 3))
         self.members_canvas = FigureCanvas(self.members_figure)
         charts_layout.addWidget(self.members_canvas)
 
         main_layout.addLayout(charts_layout)
 
-        # Optional: Refresh button
+        # Кнопка обновления
         refresh_button = QPushButton("Обновить данные")
         refresh_button.clicked.connect(self.on_refresh)
         main_layout.addWidget(refresh_button)
+
+    def apply_styles(self):
+        # Применяем стили к элементам
+        self.payments_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #2d2d2d;
+                alternate-background-color: #3a3a3a;
+                selection-background-color: #3a506b;
+                gridline-color: #555;
+                color: white;
+            }
+
+            QTableWidget::item:selected {
+                background-color: #3a506b;
+            }
+
+            QHeaderView::section {
+                background-color: #3a506b;
+                color: white;
+                padding: 4px;
+                border: 1px solid #555;
+            }
+        """)
+
+        self.stats_label.setStyleSheet("""
+            QLabel {
+                background-color: #3a3a3a;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 10px;
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+            }
+        """)
 
     def on_refresh(self):
         self.refresh_payments_table()
@@ -72,7 +109,7 @@ class ReportsTab(QWidget):
         payments = self.payment_repo.find_all()
         self.payments_table.setRowCount(len(payments))
 
-        total_revenue = 0
+        total_revenue = Decimal("0.00")
         for row, payment in enumerate(payments):
             self.payments_table.setItem(row, 0, QTableWidgetItem(str(payment.payment_id)))
 
@@ -84,17 +121,18 @@ class ReportsTab(QWidget):
             plan_name = plan.name if plan else "Не найден"
             self.payments_table.setItem(row, 2, QTableWidgetItem(plan_name))
 
-            amount_str = f"{float(payment.amount):.2f}"
+            amount = float(payment.amount) if isinstance(payment.amount, Decimal) else payment.amount
+            amount_str = f"{amount:.2f}"
             self.payments_table.setItem(row, 3, QTableWidgetItem(amount_str))
-            total_revenue += float(payment.amount)
+            total_revenue += Decimal(str(payment.amount))
 
-        # Update stats
+        # Обновление статистики
         all_members = self.member_repo.get_all()
         total_members = len(all_members)
         active_members = sum(1 for m in all_members if m.is_active)
 
         self.stats_label.setText(
-            f"Общая выручка: {total_revenue:.2f} руб.\n"
+            f"Общая выручка: {float(total_revenue):.2f} руб.\n"
             f"Всего участников: {total_members}\n"
             f"Активных участников: {active_members}"
         )
@@ -109,13 +147,13 @@ class ReportsTab(QWidget):
         for payment in payments:
             plan = self.plan_repo.find_by_id(payment.plan_id)
             plan_name = plan.name if plan else "Неизвестный план"
-            plan_revenue[plan_name] = plan_revenue.get(plan_name, 0) + float(payment.amount)
+            plan_revenue[plan_name] = plan_revenue.get(plan_name, Decimal("0")) + payment.amount
 
         if not plan_revenue:
             ax.text(0.5, 0.5, "Нет данных", ha='center', va='center', transform=ax.transAxes)
         else:
             plans = list(plan_revenue.keys())
-            revenues = list(plan_revenue.values())
+            revenues = [float(v) for v in plan_revenue.values()]
 
             bars = ax.bar(plans, revenues, color='red')
             ax.set_xlabel('Абонементы')

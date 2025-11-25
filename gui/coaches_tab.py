@@ -18,19 +18,20 @@ class CoachesTab(QWidget):
         self.init_ui()
         self.setup_connections()
         self.refresh_coaches_table()
+        self.apply_styles()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
 
-        # Create splitter for resizable sections
+        # Создание разделителя
         splitter = QSplitter(Qt.Orientation.Vertical)
         layout.addWidget(splitter)
 
-        # Top section with search and table
+        # Верхняя часть с поиском и таблицей
         top_widget = QWidget()
         top_layout = QVBoxLayout(top_widget)
-        
-        # Search section
+
+        # Поиск
         search_layout = QHBoxLayout()
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Поиск по тренерам...")
@@ -42,27 +43,27 @@ class CoachesTab(QWidget):
         search_layout.addWidget(self.clear_search_btn)
         top_layout.addLayout(search_layout)
 
-        # Coaches table
+        # Таблица тренеров
         self.coaches_table = QTableWidget()
         self.coaches_table.setColumnCount(7)
         self.coaches_table.setHorizontalHeaderLabels([
             "ID", "Имя", "Фамилия", "Email", "Телефон", "Специализация", "Ставка"
         ])
-        
-        # Enable sorting
+
+        # Включение сортировки
         self.coaches_table.setSortingEnabled(True)
         header = self.coaches_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        
+
         top_layout.addWidget(QLabel("Тренеры:"))
         top_layout.addWidget(self.coaches_table)
         splitter.addWidget(top_widget)
 
-        # Bottom section with form
+        # Нижняя часть с формой
         bottom_widget = QWidget()
         bottom_layout = QVBoxLayout(bottom_widget)
 
-        # Coach form
+        # Форма тренера
         form_group = QGroupBox("Добавить/Редактировать тренера")
         form_layout = QFormLayout()
 
@@ -96,9 +97,43 @@ class CoachesTab(QWidget):
         form_layout.addRow(buttons_layout)
         form_group.setLayout(form_layout)
         bottom_layout.addWidget(form_group)
-        
+
         splitter.addWidget(bottom_widget)
-        splitter.setSizes([400, 400])  # Set initial sizes
+        splitter.setSizes([400, 400])
+
+    def apply_styles(self):
+        # Применяем стили к элементам
+        self.search_box.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 2px solid #555;
+                border-radius: 4px;
+                background-color: #2d2d2d;
+                color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3a506b;
+            }
+        """)
+
+        self.coaches_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #2d2d2d;
+                alternate-background-color: #3a3a3a;
+                selection-background-color: #3a506b;
+                gridline-color: #555;
+                color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #3a506b;
+            }
+            QHeaderView::section {
+                background-color: #3a506b;
+                color: white;
+                padding: 4px;
+                border: 1px solid #555;
+            }
+        """)
 
     def setup_connections(self):
         self.add_coach_btn.clicked.connect(self.add_coach)
@@ -124,17 +159,17 @@ class CoachesTab(QWidget):
         if not search_term:
             self.refresh_coaches_table()
             return
-            
+
         filtered_coaches = []
         for coach in self.all_coaches:
-            if (search_term in str(coach.id) or 
-                search_term in coach.first_name.lower() or 
-                search_term in coach.last_name.lower() or 
-                search_term in coach.email.lower() or 
+            if (search_term in str(coach.id) or
+                search_term in coach.first_name.lower() or
+                search_term in coach.last_name.lower() or
+                search_term in coach.email.lower() or
                 search_term in coach.phone.lower() or
                 search_term in coach.specialization.lower()):
                 filtered_coaches.append(coach)
-                
+
         self.display_coaches(filtered_coaches)
 
     def clear_search(self):
@@ -167,8 +202,8 @@ class CoachesTab(QWidget):
             email = self.coach_email_edit.text()
             phone = self.coach_phone_edit.text()
             specialization = self.coach_specialization_edit.text()
-            hourly_rate = Decimal(
-                self.coach_hourly_rate_edit.text()) if self.coach_hourly_rate_edit.text() else Decimal("0")
+            hourly_rate_text = self.coach_hourly_rate_edit.text()
+            hourly_rate = Decimal(hourly_rate_text) if hourly_rate_text else Decimal("0")
 
             if not first_name or not last_name or not email or not phone or not specialization:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, заполните все обязательные поля")
@@ -189,6 +224,8 @@ class CoachesTab(QWidget):
             self.refresh_coaches_table()
             self.clear_coach_form()
 
+        except ValueError as e:
+            QMessageBox.critical(self, "Ошибка", f"Некорректный формат числа (ставка): {str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить тренера: {str(e)}")
 
@@ -197,13 +234,20 @@ class CoachesTab(QWidget):
 
     def delete_coach(self):
         try:
-            coach_id = int(self.coach_id_edit.text()) if self.coach_id_edit.text() else 0
+            coach_id_text = self.coach_id_edit.text()
+            if not coach_id_text:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите ID тренера")
+                return
+            coach_id = int(coach_id_text)
             if coach_id <= 0:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите действительный ID тренера")
                 return
-            reply = QMessageBox.question(self, "Подтверждение",
-                                         f"Вы уверены, что хотите удалить тренера с ID {coach_id}?",
-                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+            reply = QMessageBox.question(
+                self, "Подтверждение",
+                f"Вы уверены, что хотите удалить тренера с ID {coach_id}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
 
             if reply == QMessageBox.StandardButton.Yes:
                 success = self.coach_repo.delete(coach_id)
@@ -214,6 +258,8 @@ class CoachesTab(QWidget):
                 else:
                     QMessageBox.warning(self, "Ошибка", "Тренер с указанным ID не найден")
 
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Некорректный формат ID")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось удалить тренера: {str(e)}")
 

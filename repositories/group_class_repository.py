@@ -17,8 +17,11 @@ class GroupClassRepository:
             return []
         try:
             with open(self.filename, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
+                content = f.read().strip()
+                if not content:
+                    return []
+                return json.loads(content)
+        except json.JSONDecodeError as e:
             print(f"Ошибка чтения group_classes.json: {e}")
             return []
 
@@ -38,7 +41,7 @@ class GroupClassRepository:
             "class_name": cls.class_name,
             "coach_id": cls.coach.id,
             "room_id": cls.room.room_id,
-            "schedule": cls.schedule.isoformat(),  # ISO 8601
+            "schedule": cls.schedule.isoformat() if cls.schedule else None,  # ISO 8601
             "max_capacity": cls.max_capacity,
             "current_attendees": cls.current_attendees,
             "attendees": cls.attendees,
@@ -94,7 +97,7 @@ class GroupClassRepository:
                     class_name=item["class_name"],
                     coach=coach,
                     room=room,
-                    schedule=datetime.fromisoformat(item["schedule"]),
+                    schedule=datetime.fromisoformat(item["schedule"]) if item["schedule"] else None,
                     max_capacity=item["max_capacity"],
                     current_attendees=item["current_attendees"],
                     attendees=item.get("attendees", [])

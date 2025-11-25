@@ -11,8 +11,14 @@ class MembershipPlanRepository:
     def _load(self) -> List[Dict]:
         if not os.path.exists(self.filename):
             return []
-        with open(self.filename, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(self.filename, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if not content:
+                    return []
+                return json.loads(content)
+        except json.JSONDecodeError:
+            return []
 
     def _save(self, data: List[Dict]) -> None:
         with open(self.filename, "w", encoding="utf-8") as f:

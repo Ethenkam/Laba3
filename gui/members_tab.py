@@ -23,18 +23,18 @@ class MembersTab(QWidget):
         self.setup_connections()
         self.refresh_members_table()
         self.refresh_plans_combo()
+        self.apply_styles()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
 
-        # Create splitter for resizable sections
+        # Создание разделителя
         splitter = QSplitter(Qt.Orientation.Vertical)
         layout.addWidget(splitter)
 
-        # Top section with search and table
+        # Верхняя часть с поиском и таблицей
         top_widget = QWidget()
         top_layout = QVBoxLayout(top_widget)
-        
 
         search_layout = QHBoxLayout()
         self.search_box = QLineEdit()
@@ -47,7 +47,7 @@ class MembersTab(QWidget):
         search_layout.addWidget(self.clear_search_btn)
         top_layout.addLayout(search_layout)
 
-        # Members table
+        # Таблица участников
         self.members_table = QTableWidget()
         self.members_table.setColumnCount(8)
         self.members_table.setHorizontalHeaderLabels([
@@ -55,21 +55,19 @@ class MembersTab(QWidget):
             "Дата начала", "Дата окончания", "Активен"
         ])
         self.members_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        
-        # Enable sorting
         self.members_table.setSortingEnabled(True)
         header = self.members_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        
+
         top_layout.addWidget(QLabel("Участники:"))
         top_layout.addWidget(self.members_table)
         splitter.addWidget(top_widget)
 
-        # Bottom section with forms
+        # Нижняя часть с формами
         bottom_widget = QWidget()
         bottom_layout = QVBoxLayout(bottom_widget)
 
-        # Member form
+        # Форма участника
         form_group = QGroupBox("Добавить/Редактировать участника")
         form_layout = QFormLayout()
 
@@ -108,7 +106,7 @@ class MembersTab(QWidget):
         form_group.setLayout(form_layout)
         bottom_layout.addWidget(form_group)
 
-        # Purchase membership form
+        # Форма покупки абонемента
         purchase_group = QGroupBox("Купить абонемент")
         purchase_layout = QFormLayout()
 
@@ -123,9 +121,44 @@ class MembersTab(QWidget):
 
         purchase_group.setLayout(purchase_layout)
         bottom_layout.addWidget(purchase_group)
-        
+
         splitter.addWidget(bottom_widget)
-        splitter.setSizes([400, 400])  # Set initial sizes
+        splitter.setSizes([400, 400])
+
+    def apply_styles(self):
+        # Стили для поискового поля
+        self.search_box.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 2px solid #555;
+                border-radius: 4px;
+                background-color: #2d2d2d;
+                color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3a506b;
+            }
+        """)
+
+        # Стили для таблицы
+        self.members_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #2d2d2d;
+                alternate-background-color: #3a3a3a;
+                selection-background-color: #3a506b;
+                gridline-color: #555;
+                color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #3a506b;
+            }
+            QHeaderView::section {
+                background-color: #3a506b;
+                color: white;
+                padding: 4px;
+                border: 1px solid #555;
+            }
+        """)
 
     def setup_connections(self):
         self.add_member_btn.clicked.connect(self.add_member)
@@ -144,7 +177,7 @@ class MembersTab(QWidget):
         self.member_last_name_edit.setText(self.members_table.item(row, 2).text())
         self.member_email_edit.setText(self.members_table.item(row, 3).text())
         self.member_phone_edit.setText(self.members_table.item(row, 4).text())
-        
+
         start_date_str = self.members_table.item(row, 5).text()
         if start_date_str:
             try:
@@ -152,7 +185,7 @@ class MembersTab(QWidget):
                 self.member_start_date_edit.setDate(QDate(start_date.year, start_date.month, start_date.day))
             except ValueError:
                 pass
-                
+
         end_date_str = self.members_table.item(row, 6).text()
         if end_date_str:
             try:
@@ -160,7 +193,7 @@ class MembersTab(QWidget):
                 self.member_end_date_edit.setDate(QDate(end_date.year, end_date.month, end_date.day))
             except ValueError:
                 pass
-        
+
         is_active = self.members_table.item(row, 7).text() == "Да"
         self.member_active_checkbox.setChecked(is_active)
 
@@ -169,16 +202,16 @@ class MembersTab(QWidget):
         if not search_term:
             self.refresh_members_table()
             return
-            
+
         filtered_members = []
         for member in self.all_members:
-            if (search_term in str(member.id) or 
-                search_term in member.first_name.lower() or 
-                search_term in member.last_name.lower() or 
-                search_term in member.email.lower() or 
+            if (search_term in str(member.id) or
+                search_term in member.first_name.lower() or
+                search_term in member.last_name.lower() or
+                search_term in member.email.lower() or
                 search_term in member.phone.lower()):
                 filtered_members.append(member)
-                
+
         self.display_members(filtered_members)
 
     def clear_search(self):
@@ -203,6 +236,7 @@ class MembersTab(QWidget):
 
             active_status = "Да" if member.is_active else "Нет"
             self.members_table.setItem(row, 7, QTableWidgetItem(active_status))
+
         self.members_table.resizeColumnsToContents()
 
     def refresh_members_table(self):
@@ -250,17 +284,26 @@ class MembersTab(QWidget):
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить участника: {str(e)}")
 
     def update_member(self):
+        # Для простоты вызываем ту же логику, что и в add_member
+        # В реальном приложении может понадобиться отдельная логика обновления
         self.add_member()
 
     def delete_member(self):
         try:
-            member_id = int(self.member_id_edit.text()) if self.member_id_edit.text() else 0
+            member_id_text = self.member_id_edit.text()
+            if not member_id_text:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите ID участника")
+                return
+            member_id = int(member_id_text)
             if member_id <= 0:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите действительный ID участника")
                 return
-            reply = QMessageBox.question(self, "Подтверждение",
-                                         f"Вы уверены, что хотите удалить участника с ID {member_id}?",
-                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+            reply = QMessageBox.question(
+                self, "Подтверждение",
+                f"Вы уверены, что хотите удалить участника с ID {member_id}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
 
             if reply == QMessageBox.StandardButton.Yes:
                 success = self.member_repo.delete(member_id)
@@ -271,6 +314,8 @@ class MembersTab(QWidget):
                 else:
                     QMessageBox.warning(self, "Ошибка", "Участник с указанным ID не найден")
 
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Некорректный формат ID")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось удалить участника: {str(e)}")
 
@@ -286,18 +331,21 @@ class MembersTab(QWidget):
 
     def purchase_membership(self):
         try:
-            member_id = int(self.purchase_member_id_edit.text()) if self.purchase_member_id_edit.text() else 0
-            plan_id = self.purchase_plan_combo.currentData()
-
+            member_id_text = self.purchase_member_id_edit.text()
+            if not member_id_text:
+                QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите ID участника")
+                return
+            member_id = int(member_id_text)
             if member_id <= 0:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, укажите действительный ID участника")
                 return
 
+            plan_id = self.purchase_plan_combo.currentData()
             if not plan_id:
                 QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите абонемент")
                 return
 
-            # Get member and plan
+            # Получение участника и абонемента
             member = self.member_repo.get_by_id(member_id)
             plan = self.plan_repo.find_by_id(plan_id)
 
@@ -309,23 +357,25 @@ class MembersTab(QWidget):
                 QMessageBox.warning(self, "Ошибка", f"Абонемент с ID {plan_id} не найден")
                 return
 
-            # Create payment service and process purchase
+            # Создание сервиса оплаты и обработка покупки
             payment_service = PaymentService(self.member_repo, self.payment_repo)
 
-            # Generate new payment ID
+            # Генерация нового ID платежа
             payments = self.payment_repo.find_all()
             payment_id = max([p.payment_id for p in payments], default=0) + 1
 
-            # Process purchase
+            # Обработка покупки
             success = payment_service.purchase_membership(member_id, plan, payment_id)
 
             if success:
                 QMessageBox.information(self, "Успех", "Абонемент успешно куплен и активирован")
                 self.refresh_members_table()
-                self.refresh_plans_combo()  # Update UI
+                self.refresh_plans_combo()
                 self.purchase_member_id_edit.clear()
             else:
                 QMessageBox.critical(self, "Ошибка", "Не удалось купить абонемент")
 
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Некорректный формат ID участника")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось купить абонемент: {str(e)}")
