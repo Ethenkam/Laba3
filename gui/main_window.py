@@ -1,7 +1,6 @@
 import sys
 import csv
 import xlsxwriter
-from decimal import Decimal
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget,
     QStatusBar, QToolBar, QMessageBox, QFileDialog
@@ -9,7 +8,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor
 
-# GUI modules
 from gui.members_tab import MembersTab
 from gui.classes_tab import ClassesTab
 from gui.coaches_tab import CoachesTab
@@ -17,18 +15,12 @@ from gui.rooms_tab import RoomsTab
 from gui.plans_tab import PlansTab
 from gui.reports_tab import ReportsTab
 
-# Repositories
 from repositories.member_repository import MemberRepository
 from repositories.coach_repository import CoachRepository
 from repositories.gym_room_repository import GymRoomRepository
 from repositories.group_class_repository import GroupClassRepository
 from repositories.membership_plan_repository import MembershipPlanRepository
 from repositories.payment_repository import PaymentRepository
-
-# Data classes (used only in ensure_data_exists)
-from classes.Membership_plan import MembershipPlan
-from classes.people import Coach
-from classes.gym_room import GymRoom
 
 
 class GymManagementSystem(QMainWindow):
@@ -37,29 +29,22 @@ class GymManagementSystem(QMainWindow):
         self.setWindowTitle("Система управления фитнес-клубом")
         self.setGeometry(100, 100, 1200, 800)
 
-        # Apply dark theme
         self.apply_stylesheet()
 
-        # Initialize repositories
         self.member_repo = MemberRepository()
         self.coach_repo = CoachRepository()
         self.room_repo = GymRoomRepository()
         self.group_class_repo = GroupClassRepository()
         self.plan_repo = MembershipPlanRepository()
         self.payment_repo = PaymentRepository()
-
-        # Central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-
-        # Build UI components
         self.create_toolbar()
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
         self.create_status_bar()
         self.create_tabs()
-        self.ensure_data_exists()
 
     def apply_stylesheet(self):
         palette = QPalette()
@@ -215,24 +200,6 @@ class GymManagementSystem(QMainWindow):
         self.tabs.addTab(self.reports_tab, "Отчеты")
 
         self.refresh_all_tables()
-
-    def ensure_data_exists(self):
-        # Ensure sample membership plans exist
-        if not self.plan_repo.find_all():
-            plan1 = MembershipPlan(1, "Базовый (10мес)", 300, Decimal("34800"))
-            plan2 = MembershipPlan(2, "Премиум (14 мес)", 420, Decimal("41200"))
-            self.plan_repo.save(plan1)
-            self.plan_repo.save(plan2)
-
-        # Ensure sample coach exists
-        if not self.coach_repo.find_all():
-            coach = Coach(1, "Иван", "Сидоров", "ivan@fit.com", "79998887766", "Кардио", Decimal("2000.00"))
-            self.coach_repo.save(coach)
-
-        # Ensure sample room exists
-        if not self.room_repo.find_all():
-            room = GymRoom(1, "Зал для кардио", "кардио", 15)
-            self.room_repo.save(room)
 
     def refresh_all_tables(self):
         self.members_tab.refresh_members_table()

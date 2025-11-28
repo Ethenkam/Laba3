@@ -10,7 +10,6 @@ def main():
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
-    # AA_EnableHighDpiScaling и AA_UseHighDpiPixmaps НЕ НУЖНЫ в Qt6 — они включены по умолчанию
 
     app = QApplication(sys.argv)
     app.setApplicationName("Система управления фитнес-клубом")

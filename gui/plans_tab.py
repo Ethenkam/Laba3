@@ -205,7 +205,6 @@ class PlansTab(QWidget):
 
     def update_plan(self):
         # Для простоты повторно используем логику добавления
-        # В реальном приложении рекомендуется реализовать обновление отдельно
         self.add_plan()
 
     def delete_plan(self):
