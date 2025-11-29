@@ -48,6 +48,7 @@ class PlansTab(QWidget):
         self.plans_table.setHorizontalHeaderLabels([
             "ID", "Название", "Длительность (дни)", "Цена"
         ])
+        self.plans_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.plans_table.setSortingEnabled(True)
         header = self.plans_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)

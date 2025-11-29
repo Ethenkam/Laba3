@@ -49,7 +49,7 @@ class RoomsTab(QWidget):
             "ID", "Название", "Тип", "Вместимость"
         ])
 
-        # Включение сортировки
+        self.rooms_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.rooms_table.setSortingEnabled(True)
         header = self.rooms_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)

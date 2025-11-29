@@ -35,17 +35,18 @@ class ReportsTab(QWidget):
         ])
         self.payments_table.setSortingEnabled(True)
         header = self.payments_table.horizontalHeader()
+        self.payments_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         payments_layout.addWidget(self.payments_table)
         payments_group.setLayout(payments_layout)
         main_layout.addWidget(payments_group)
 
-        # === Статистика ===
+        # Статистика
         self.stats_label = QLabel()
         main_layout.addWidget(self.stats_label)
 
-        # === Диаграммы ===
+        # Диаграммы
         charts_layout = QHBoxLayout()
 
         # Диаграмма доходов

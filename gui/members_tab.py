@@ -284,8 +284,6 @@ class MembersTab(QWidget):
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить участника: {str(e)}")
 
     def update_member(self):
-        # Для простоты вызываем ту же логику, что и в add_member
-        # В реальном приложении может понадобиться отдельная логика обновления
         self.add_member()
 
     def delete_member(self):

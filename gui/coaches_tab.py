@@ -51,6 +51,7 @@ class CoachesTab(QWidget):
         ])
 
         # Включение сортировки
+        self.coaches_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.coaches_table.setSortingEnabled(True)
         header = self.coaches_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)

@@ -282,13 +282,11 @@ class GymManagementSystem(QMainWindow):
     def export_table_to_csv(self, table, file_path):
         with open(file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
             writer = csv.writer(csvfile)
-            # Header
             header = []
             for col in range(table.columnCount()):
                 item = table.horizontalHeaderItem(col)
-                header.append(item.text() if item else f"Column {col}")
+                header.append(item.text() if item else f"Колонка {col}")
             writer.writerow(header)
-            # Data rows
             for row in range(table.rowCount()):
                 row_data = []
                 for col in range(table.columnCount()):
