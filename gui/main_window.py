@@ -163,6 +163,26 @@ class GymManagementSystem(QMainWindow):
                 border: 1px solid #555;
                 background-color: #3a506b;
             }
+            QMessageBox {
+                background-color: #2b2b2b;
+            }
+            QMessageBox QLabel {
+                color: white;
+            }
+            QMessageBox QPushButton {
+                background-color: #3a506b;
+                border: 1px solid #1c2541;
+                border-radius: 4px;
+                padding: 6px;
+                color: white;
+                font-weight: bold;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #5bc0be;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #0b132b;
+            }
         """)
 
     def create_toolbar(self):
@@ -281,13 +301,11 @@ class GymManagementSystem(QMainWindow):
         worksheet = workbook.add_worksheet()
         header_format = workbook.add_format({'bold': True, 'bg_color': '#D7E4BC'})
 
-        # Write header
         for col in range(table.columnCount()):
             header_item = table.horizontalHeaderItem(col)
             header_text = header_item.text() if header_item else f"Column {col}"
             worksheet.write(0, col, header_text, header_format)
 
-        # Write data rows
         for row in range(table.rowCount()):
             for col in range(table.columnCount()):
                 item = table.item(row, col)

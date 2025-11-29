@@ -6,7 +6,6 @@ from gui.main_window import GymManagementSystem
 
 
 def main():
-    # Настройка масштабирования DPI (опционально, но корректно для Qt6)
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
